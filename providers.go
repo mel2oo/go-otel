@@ -14,12 +14,15 @@ import (
 )
 
 // newMeterProvider creates a new meter provider with the OTLP gRPC exporter.
-func newMeterProvider(ctx context.Context, endp string,
-	res *resource.Resource) (*metric.MeterProvider, error) {
-	exporter, err := otlpmetricgrpc.New(ctx,
-		otlpmetricgrpc.WithInsecure(),
-		otlpmetricgrpc.WithEndpoint(endp),
-	)
+func newMeterProvider(ctx context.Context, res *resource.Resource,
+	opts *Options) (*metric.MeterProvider, error) {
+	newOpts := []otlpmetricgrpc.Option{}
+	newOpts = append(newOpts, otlpmetricgrpc.WithInsecure())
+	if len(opts.endpoint) > 0 {
+		newOpts = append(newOpts, otlpmetricgrpc.WithEndpoint(opts.endpoint))
+	}
+
+	exporter, err := otlpmetricgrpc.New(ctx, newOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create OTLP metric exporter: %w", err)
 	}
@@ -28,22 +31,28 @@ func newMeterProvider(ctx context.Context, endp string,
 		metric.WithReader(metric.NewPeriodicReader(exporter)),
 		metric.WithResource(res),
 	)
-	otel.SetMeterProvider(mp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
 		propagation.Baggage{},
 	))
 
+	if opts.global {
+		otel.SetMeterProvider(mp)
+	}
+
 	return mp, nil
 }
 
 // newTracerProvider creates a new tracer provider with the OTLP gRPC exporter.
-func newTracerProvider(ctx context.Context, endp string,
-	res *resource.Resource) (*trace.TracerProvider, error) {
-	exporter, err := otlptracegrpc.New(ctx,
-		otlptracegrpc.WithInsecure(),
-		otlptracegrpc.WithEndpoint(endp),
-	)
+func newTracerProvider(ctx context.Context, res *resource.Resource,
+	opts *Options) (*trace.TracerProvider, error) {
+	newOpts := []otlptracegrpc.Option{}
+	newOpts = append(newOpts, otlptracegrpc.WithInsecure())
+	if len(opts.endpoint) > 0 {
+		newOpts = append(newOpts, otlptracegrpc.WithEndpoint(opts.endpoint))
+	}
+
+	exporter, err := otlptracegrpc.New(ctx, newOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create OTLP trace exporter: %w", err)
 	}
@@ -53,7 +62,10 @@ func newTracerProvider(ctx context.Context, endp string,
 		trace.WithBatcher(exporter),
 		trace.WithResource(res),
 	)
-	otel.SetTracerProvider(tp)
+
+	if opts.global {
+		otel.SetTracerProvider(tp)
+	}
 
 	return tp, nil
 }
