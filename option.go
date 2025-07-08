@@ -25,9 +25,13 @@ func WithServiceVersion(version string) Option {
 }
 
 func WithEndponit(endpoint string) Option {
-	return func(o *Options) { o.endpoint = endpoint }
+	return func(o *Options) {
+		if endpoint != "" {
+			o.endpoint = endpoint
+		}
+	}
 }
 
-func WithGlobal() Option {
-	return func(o *Options) { o.global = true }
+func WithGlobal(b bool) Option {
+	return func(o *Options) { o.global = b }
 }
