@@ -6,7 +6,8 @@ type Options struct {
 	serviceName    string
 	serviceVersion string
 	endpoint       string
-	global         bool
+	setGlobal      bool
+	setStandard    bool
 }
 
 func newOptions() *Options {
@@ -32,6 +33,10 @@ func WithEndponit(endpoint string) Option {
 	}
 }
 
-func WithGlobal(b bool) Option {
-	return func(o *Options) { o.global = b }
+func SetGlobal() Option {
+	return func(o *Options) { o.setGlobal = true }
+}
+
+func SetStandard() Option {
+	return func(o *Options) { o.setStandard = true }
 }

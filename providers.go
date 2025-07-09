@@ -36,7 +36,7 @@ func newMeterProvider(ctx context.Context, res *resource.Resource,
 		propagation.Baggage{},
 	))
 
-	if opts.global {
+	if opts.setGlobal {
 		otel.SetMeterProvider(mp)
 	}
 
@@ -63,7 +63,7 @@ func newTracerProvider(ctx context.Context, res *resource.Resource,
 		trace.WithResource(res),
 	)
 
-	if opts.global {
+	if opts.setGlobal {
 		otel.SetTracerProvider(tp)
 	}
 
