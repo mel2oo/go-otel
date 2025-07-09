@@ -3,8 +3,10 @@ package otel
 import (
 	"context"
 
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 	nm "go.opentelemetry.io/otel/metric/noop"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
@@ -26,6 +28,7 @@ type Provider struct {
 
 	MeterProvider  metric.MeterProvider
 	TracerProvider trace.TracerProvider
+	Propagators    propagation.TextMapPropagator
 }
 
 func NewProvider(ctx context.Context, opts ...Option) (*Provider, error) {
@@ -40,20 +43,30 @@ func NewProvider(ctx context.Context, opts ...Option) (*Provider, error) {
 		semconv.ServiceVersion(opt.serviceVersion),
 	)
 
-	mp, err := newMeterProvider(ctx, res, opt)
+	meterProvider, err := newMeterProvider(ctx, res, opt)
 	if err != nil {
 		return nil, err
 	}
 
-	tp, err := newTracerProvider(ctx, res, opt)
+	tracerProvider, err := newTracerProvider(ctx, res, opt)
 	if err != nil {
 		return nil, err
 	}
 
 	op := &Provider{
 		opts:           opt,
-		MeterProvider:  mp,
-		TracerProvider: tp,
+		MeterProvider:  meterProvider,
+		TracerProvider: tracerProvider,
+		Propagators: propagation.NewCompositeTextMapPropagator(
+			propagation.TraceContext{},
+			propagation.Baggage{},
+		),
+	}
+
+	if opt.setGlobal {
+		otel.SetMeterProvider(op.MeterProvider)
+		otel.SetTracerProvider(op.TracerProvider)
+		otel.SetTextMapPropagator(op.Propagators)
 	}
 
 	if opt.setStandard {

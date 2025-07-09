@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -31,14 +29,6 @@ func newMeterProvider(ctx context.Context, res *resource.Resource,
 		metric.WithReader(metric.NewPeriodicReader(exporter)),
 		metric.WithResource(res),
 	)
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
-		propagation.TraceContext{},
-		propagation.Baggage{},
-	))
-
-	if opts.setGlobal {
-		otel.SetMeterProvider(mp)
-	}
 
 	return mp, nil
 }
@@ -62,10 +52,6 @@ func newTracerProvider(ctx context.Context, res *resource.Resource,
 		trace.WithBatcher(exporter),
 		trace.WithResource(res),
 	)
-
-	if opts.setGlobal {
-		otel.SetTracerProvider(tp)
-	}
 
 	return tp, nil
 }
