@@ -12,9 +12,9 @@ import (
 )
 
 var std *Provider = &Provider{
-	opts:   newOptions(),
-	meter:  nm.NewMeterProvider(),
-	tracer: nt.NewTracerProvider(),
+	opts:           newOptions(),
+	MeterProvider:  nm.NewMeterProvider(),
+	TracerProvider: nt.NewTracerProvider(),
 }
 
 func Standard() *Provider {
@@ -22,9 +22,10 @@ func Standard() *Provider {
 }
 
 type Provider struct {
-	opts   *Options
-	meter  metric.MeterProvider
-	tracer trace.TracerProvider
+	opts *Options
+
+	MeterProvider  metric.MeterProvider
+	TracerProvider trace.TracerProvider
 }
 
 func NewProvider(ctx context.Context, opts ...Option) (*Provider, error) {
@@ -50,9 +51,9 @@ func NewProvider(ctx context.Context, opts ...Option) (*Provider, error) {
 	}
 
 	op := &Provider{
-		opts:   opt,
-		meter:  mp,
-		tracer: tp,
+		opts:           opt,
+		MeterProvider:  mp,
+		TracerProvider: tp,
 	}
 
 	if opt.setStandard {
