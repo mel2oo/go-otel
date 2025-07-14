@@ -17,6 +17,10 @@ var std *Provider = &Provider{
 	opts:           newOptions(),
 	MeterProvider:  nm.NewMeterProvider(),
 	TracerProvider: nt.NewTracerProvider(),
+	Propagators: propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	),
 }
 
 func Standard() *Provider {
