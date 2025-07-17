@@ -114,10 +114,8 @@ func Middleware(service string, opts ...Option) gin.HandlerFunc {
 		}
 
 		// record active request
-		sc.RecordActiveRequests(ctx, 1, c.Request, service,
-			additionalAttributes...)
-		defer sc.RecordActiveRequests(ctx, -1, c.Request, service,
-			additionalAttributes...)
+		sc.RecordActiveRequests(ctx, 1, c.Request, additionalAttributes...)
+		defer sc.RecordActiveRequests(ctx, -1, c.Request, additionalAttributes...)
 
 		// serve the request to the next middleware
 		c.Next()
