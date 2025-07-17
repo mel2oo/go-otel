@@ -148,7 +148,7 @@ func (s HTTPServer) RecordActiveRequests(
 		value,
 		httpconv.RequestMethodAttr(req.Method),
 		server,
-		CurrentHTTPServer{}.MetricAttributes(server, req, 0, attrs)...,
+		attrs...,
 	)
 }
 
