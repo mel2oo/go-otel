@@ -139,16 +139,16 @@ func (s HTTPServer) RecordMetrics(ctx context.Context, md ServerMetricData) {
 func (s HTTPServer) RecordActiveRequests(
 	ctx context.Context,
 	value int64,
-	method string,
+	req *http.Request,
 	server string,
 	attrs ...attribute.KeyValue,
 ) {
 	s.activeRequestsUpDownCounter.Add(
 		ctx,
 		value,
-		httpconv.RequestMethodAttr(method),
+		httpconv.RequestMethodAttr(req.Method),
 		server,
-		attrs...,
+		CurrentHTTPServer{}.MetricAttributes(server, req, 0, attrs)...,
 	)
 }
 

@@ -22,7 +22,7 @@ import (
 const (
 	tracerKey = "otel-go-contrib-tracer"
 	// ScopeName is the instrumentation scope name.
-	ScopeName = "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	ScopeName = "github.com/mel2oo/go-otel/otelgin"
 )
 
 // Middleware returns middleware that will trace incoming requests.
@@ -107,9 +107,23 @@ func Middleware(service string, opts ...Option) gin.HandlerFunc {
 		// pass the span through the request context
 		c.Request = c.Request.WithContext(ctx)
 
+		// Record the server-side attributes.
+		var additionalAttributes []attribute.KeyValue
+		if c.FullPath() != "" {
+			additionalAttributes = append(additionalAttributes, sc.Route(c.FullPath()))
+		}
+		if cfg.MetricAttributeFn != nil {
+			additionalAttributes = append(additionalAttributes, cfg.MetricAttributeFn(c.Request)...)
+		}
+		if cfg.GinMetricAttributeFn != nil {
+			additionalAttributes = append(additionalAttributes, cfg.GinMetricAttributeFn(c)...)
+		}
+
 		// record active request
-		sc.RecordActiveRequests(ctx, 1, c.Request.Method, service)
-		defer sc.RecordActiveRequests(ctx, -1, c.Request.Method, service)
+		sc.RecordActiveRequests(ctx, 1, c.Request, service,
+			additionalAttributes...)
+		defer sc.RecordActiveRequests(ctx, -1, c.Request, service,
+			additionalAttributes...)
 
 		// serve the request to the next middleware
 		c.Next()
@@ -126,18 +140,6 @@ func Middleware(service string, opts ...Option) gin.HandlerFunc {
 			for _, err := range c.Errors {
 				span.RecordError(err.Err)
 			}
-		}
-
-		// Record the server-side attributes.
-		var additionalAttributes []attribute.KeyValue
-		if c.FullPath() != "" {
-			additionalAttributes = append(additionalAttributes, sc.Route(c.FullPath()))
-		}
-		if cfg.MetricAttributeFn != nil {
-			additionalAttributes = append(additionalAttributes, cfg.MetricAttributeFn(c.Request)...)
-		}
-		if cfg.GinMetricAttributeFn != nil {
-			additionalAttributes = append(additionalAttributes, cfg.GinMetricAttributeFn(c)...)
 		}
 
 		sc.RecordMetrics(ctx, semconv.ServerMetricData{
