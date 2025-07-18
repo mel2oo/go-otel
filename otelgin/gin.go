@@ -112,6 +112,12 @@ func Middleware(service string, opts ...Option) gin.HandlerFunc {
 		if c.FullPath() != "" {
 			additionalAttributes = append(additionalAttributes, sc.Route(c.FullPath()))
 		}
+		if cfg.MetricAttributeFn != nil {
+			additionalAttributes = append(additionalAttributes, cfg.MetricAttributeFn(c.Request)...)
+		}
+		if cfg.GinMetricAttributeFn != nil {
+			additionalAttributes = append(additionalAttributes, cfg.GinMetricAttributeFn(c)...)
+		}
 
 		// record active request
 		sc.RecordActiveRequests(ctx, 1, c.Request, additionalAttributes...)
@@ -132,13 +138,6 @@ func Middleware(service string, opts ...Option) gin.HandlerFunc {
 			for _, err := range c.Errors {
 				span.RecordError(err.Err)
 			}
-		}
-
-		if cfg.MetricAttributeFn != nil {
-			additionalAttributes = append(additionalAttributes, cfg.MetricAttributeFn(c.Request)...)
-		}
-		if cfg.GinMetricAttributeFn != nil {
-			additionalAttributes = append(additionalAttributes, cfg.GinMetricAttributeFn(c)...)
 		}
 
 		sc.RecordMetrics(ctx, semconv.ServerMetricData{
